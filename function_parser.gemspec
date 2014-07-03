@@ -8,17 +8,22 @@ Gem::Specification.new do |s|
   s.platform  = Gem::Platform::RUBY
   s.date      = Date.today.to_s
 
+  s.summary     = "Safely parse strings into Ruby procs"
+  s.description = ""
+
   s.authors   = ["David Feldman"]
   s.email     = "dbfeldman@gmail.com"
 
   s.license   = "MIT"
   s.homepage  = "https://github.com/fledman/function_parser"
 
-  s.files     = `git ls-files -z`.split("\x0")
+  s.files = Dir[
+    'Rakefile', 'README*', 'LICENSE*', '{lib,test}/**/*'
+  ] & `git ls-files -z`.split("\x0")
 
   s.require_paths = ["lib"]
 
-  s.add_dependency 'active_support', '>= 3.0.0'
+  s.add_dependency 'activesupport', '~> 3.0'
 
   s.add_development_dependency "rake"
 end
