@@ -1,0 +1,125 @@
+require 'set'
+module FunctionParser
+  class AST
+    attr_reader :source
+    attr_reader :config
+
+    def initialize(source, config = {})
+      @source = source
+      @config = config
+    end
+
+    def tokens
+      parse[:tokens]
+    end
+
+    def arguments
+      parse[:variables].keys.map(&:to_sym)
+    end
+
+    def compile
+      @compiled ||= compile_ast(tokens)
+    end
+
+    def to_proc
+      base = compile.deep_dup
+      raise ParseError, "Could not prepare expression" unless base.prepared?
+      one_arg = arguments.count == 1 ? arguments.first : false
+      Proc.new { |args = {}|
+        if args.kind_of?(Hash)
+          arg_hash = args.with_indifferent_access
+        elsif one_arg
+          arg_hash = Hash[one_arg => args].with_indifferent_access
+        else
+          raise ArgumentError, "Expected arguments to be passed as a hash"
+        end
+        result = base.execute(arg_hash)
+        args.clear.merge!(arg_hash) if args.kind_of?(Hash)
+        result
+      }
+    end
+
+    private
+
+    def parse
+      @parse ||= begin
+        expr, vars = Parser.new(config).parse(source)
+        Hash[tokens: expr, variables: vars]
+      end
+    end
+
+    def compile_ast(expr)
+      recurse = expr.map{ |ele|
+        case ele
+        when Array then compile_ast(ele)
+        when Operator then ele.dup
+        else ele
+        end
+      }
+      ordered = recurse.each_with_index.
+                  select{ |t,i| Operator===t }.
+                    select{ |t,i| !t.prepared? }.
+                      each_with_index.sort_by{ |(t,ei),oi|
+                        [t.precedence,oi*(t.associativity == :L ? 1 : -1)]
+                      }
+      nonassociative = Set.new
+      ordered.each do |(op,ind_expr),ind_op|
+        add_arg(op.associativity,ind_expr,recurse,op)
+        if op.arity == 2
+          other = op.associativity == :L ? :R : :L
+          add_arg(other,ind_expr,recurse,op)
+        end
+        raise PrecedenceError, "operation is not ready: #{op.inspect}" unless op.prepared?
+        if op.associativity == :N
+          test_nonassociative(op,nonassociative)
+          nonassociative << op.object_id
+        end
+      end
+      compiled = recurse.uniq
+      if compiled.count == 1
+        return compiled.first if compiled.first.kind_of?(Operator)
+        ident = Identity.new(compiled.first)
+        return ident if ident.prepared?
+      end
+      raise ParseError, "The expression is malformed; finished with `#{compiled.inspect}`"
+    end
+
+    def add_arg(assoc,start,expr,op)
+      case assoc
+      when :L
+        set = op.method(:left=)
+        iter = -1
+      when :R,:N
+        set = op.method(:right=)
+        iter = 1
+      else
+        raise PrecedenceError, "Unexpected associativity: `#{assoc}` for `#{op.name}`"
+      end
+      ind = bounds_check(expr.length,start+iter)
+      set.call(before = expr[ind])
+      pos = ind
+      while pos >=0 && pos < expr.length && expr[pos] == before do
+        expr[pos] = op
+        pos += iter
+      end
+      ind
+    end
+
+    def bounds_check(length, ind)
+      if ind < 0 || ind >= length
+        raise PrecedenceError, "Operator argument out of bounds: #{ind} not in (0...#{length})"
+      end
+      ind
+    end
+
+    def test_nonassociative(op, done)
+      na = [op.left,op.right].compact.select{ |lr|
+        Operator === lr && lr.associativity == :N && done.include?(lr.object_id) && lr.precedence == op.precedence
+      }
+      if na.count > 0
+        raise PrecedenceError, "Nonassociative operators must be manually grouped: #{op.name} <- " + na.map(&:name).inspect
+      end
+    end
+
+  end
+end
