@@ -1,4 +1,5 @@
 require 'active_support'
+require 'active_support/core_ext/object/deep_dup'
 require 'active_support/core_ext/hash/indifferent_access'
 require 'active_support/core_ext/string/filters'
 require_relative 'function_parser/version'
