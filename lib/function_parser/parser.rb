@@ -48,7 +48,7 @@ module FunctionParser
           prev = stack.pop
           raise ParenthesesMismatch, %{
             Closing parenthesis without opening at position #{token.seek}
-          }.strip.split.join(' ') unless prev
+          }.squish unless prev
           prev << expr unless expr.empty?
           expr = prev
         when Tokens.operators('=')
@@ -58,7 +58,7 @@ module FunctionParser
           raise UnexpectedToken, %{
             FormulaParser does not support #{token.class}
             (see position #{token.seek})
-          }.strip.split.join(' ')
+          }.squish
         end
       end
       if last
@@ -66,7 +66,7 @@ module FunctionParser
       end
       raise ParenthesesMismatch, %{
         Expression has an unclosed parenthesis
-      }.strip.split.join(' ') unless stack.empty?
+      }.squish unless stack.empty?
       return expr, variables
     rescue RubyLex::SyntaxError => se
       raise ParseError, se.message
@@ -100,14 +100,14 @@ module FunctionParser
         else
           raise InvalidRegexp, %{
             `#{string}` is not a valid regular expression
-          }.strip.split.join(' ')
+          }.squish
         end
       else
         raise UnexpectedToken, "Got a null token" if token.nil?
         raise UnexpectedToken, %{
           Expected a string, boolean, number,
           regexp, or nil at position #{token.seek}
-        }.strip.split.join(' ')
+        }.squish
       end
     end
 

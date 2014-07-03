@@ -173,7 +173,7 @@ module FunctionParser
           raise ArgumentError, %{
             #{which}-#{key} mapping does not
             have a value for `#{arg.inspect}`
-          }.strip.split.join(' ')
+          }.squish
         end
       }
       vals.count == 1 ? vals.first : vals
