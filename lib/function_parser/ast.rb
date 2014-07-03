@@ -1,4 +1,3 @@
-require 'set'
 module FunctionParser
   class AST
     attr_reader :source

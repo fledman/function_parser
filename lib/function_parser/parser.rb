@@ -1,6 +1,3 @@
-require 'stringio'
-require 'irb/ruby-lex'
-
 module FunctionParser
   class Parser
     attr_reader :config
