@@ -1,6 +1,7 @@
 module FunctionParser
   class Operator
-    attr_accessor :name, :precedence, :arity, :associativity
+    attr_accessor :name, :precedence
+    attr_accessor :arity, :associativity
     attr_accessor :left, :right
     def initialize(n)
       self.name = n
