@@ -37,7 +37,7 @@ module FunctionParser
     end
 
     def variable(name)
-      @variables[name] ||= Variable.new(name)
+      @variables[name] ||= Expression::Variable.new(name)
     end
 
     def variables
