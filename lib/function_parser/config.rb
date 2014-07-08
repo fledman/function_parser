@@ -2,39 +2,112 @@ module FunctionParser
   class Config
 
     def initialize
-      @enabled = Hash.new
+      @enabled = Hash[skip: Grammar::Skip.new]
     end
 
     def grammars
       @enabled.values
     end
 
-    [ :arithmetic, :power, :modular,
-      :equality, :comparison, :match,
-      :logical, :bitwise, :shift
-    ].each do |category|
-      define_method(category) { |on|
-        if on
-          @enabled[category] ||= begin
-            ops = Tokens.const_get(category.to_s.upcase).keys
-            Grammar::Operations.new(*ops)
-          end
-        else
-          @enabled.delete(category)
+    def operations(group, on, *args)
+      group = group.to_sym
+      incl = [
+        :arithmetic, :power, :modular,
+        :equality, :comparison, :match,
+        :logical, :bitwise, :shift
+      ].include?(group)
+      if incl
+        on_off(on,group) {
+          cat = group.to_s.upcase
+          ops = Tokens.const_get(cat).keys
+          Grammar::Operations.new(*ops)
+        }
+      elsif group == :inequality
+        raise ConfigError, %{
+          operations(:inequality, on, ...) takes
+          only one argument, got `#{args.inspect}`
+        }.squish if args.count > 1
+        strict = args.empty? ? [true,false] : args
+        strict.each do |b|
+          key = "inequality_s#{b.to_s[0]}".to_sym
+          on_off(on,key) { Grammar::Inequality(b) }
         end
+        self
+      else
+        raise ConfigError, %{
+          Unknown operation group `#{group.inspect}`
+        }.squish
+      end
+    end
+
+    def assignment(on)
+      on_off(on,:assignment) {
+        Grammar::Assignment.new
       }
     end
 
-    def inequality(on, strict = nil)
-      strict = strict.nil? ? [true,false] : [strict]
-      strict.each do |b|
-        key = "inequality_s#{b.to_s[0]}".to_sym
-        if on
-          @enabled[key] ||= Grammar::Inequality(b)
-        else
-          @enabled.delete(key)
-        end
+    def variables(on)
+      on_off(on,:variables) {
+        Grammar::Variable.new
+      }
+    end
+
+    def parentheses(on)
+      on_off(on,:parentheses) {
+        Grammar::Parens.new
+      }
+    end
+
+    def symbols(on)
+      on_off(on,:symbols) {
+        Grammar::Symbol.new
+      }
+    end
+
+    def booleans(on)
+      configurable(
+        on, :nilbool, Grammar::NilBoolean,
+        true, false
+      )
+    end
+
+    def nil(on)
+      configurable(
+        on, :nilbool, Grammar::NilBoolean,
+        nil
+      )
+    end
+
+    [Float, Integer, String, Regexp].each do |klass|
+      key = (klass.to_s.downcase << 's').to_sym
+      define_method(key) do |on|
+        configurable(
+          on, key, Grammar::Literal,
+          klass
+        )
       end
+    end
+
+    alias_method :regular_expressions, :regexps
+
+    private
+
+    def on_off(on, key)
+      if on
+        @enabled[key] ||= yield
+      else
+        @enabled.delete(key)
+      end
+      self
+    end
+
+    def configurable(on, key, klass, *types)
+      @enabled[key] ||= klass.new
+      types.each do |type|
+        @enabled[key].allow(type, on)
+      end
+      @enabled.delete(key) if @enabled[key].disabled?
+      self
     end
 
   end

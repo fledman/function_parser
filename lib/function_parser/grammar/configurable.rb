@@ -7,7 +7,7 @@ module FunctionParser
         Array(allowed).each { |k| allow(k, true) }
       end
 
-      def allow(key, on)
+      def allow(key, on = true)
         check_key(key)
         token = Tokens.operands(key)
         raise ArgumentError, %{

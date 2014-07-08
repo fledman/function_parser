@@ -4,8 +4,8 @@ module FunctionParser
       include Configurable
       attr_reader :tokens
 
-      def initialize
-        prepare([nil, true, false])
+      def initialize(allowed = [])
+        prepare(allowed)
       end
 
       def parse(token, lexer, pt)

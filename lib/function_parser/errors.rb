@@ -8,4 +8,5 @@ module FunctionParser
   class PrecedenceError < BaseError; end
   class ParseError < BaseError; end
   class UndefinedVariable < BaseError; end
+  class ConfigError < BaseError; end
 end
