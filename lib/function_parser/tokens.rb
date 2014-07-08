@@ -46,11 +46,14 @@ module FunctionParser
       '/' => RubyToken::TkDIV
     }
 
-    RELATIONAL = {
+    INEQUALITY = {
       '>'   => RubyToken::TkGT,
       '<'   => RubyToken::TkLT,
       '>='  => RubyToken::TkGEQ,
-      '<='  => RubyToken::TkLEQ,
+      '<='  => RubyToken::TkLEQ
+    }
+
+    EQUALITY = {
       '=='  => RubyToken::TkEQ,
       '===' => RubyToken::TkEQQ,
       '!='  => RubyToken::TkNEQ
@@ -101,11 +104,11 @@ module FunctionParser
 
     def self.operators(*select)
       memo_with_inverse(:operators, select) {
-        [ ARITHMETIC, RELATIONAL,
+        [ ASSIGNMENT, ARITHMETIC,
+          EQUALITY, INEQUALITY,
           COMPARISON, LOGICAL,
           MATCH, BITWISE, SHIFT,
-          MODULAR, POWER, UNARY,
-          ASSIGNMENT
+          MODULAR, POWER, UNARY
         ].reduce(:merge)
       }
     end

@@ -3,17 +3,17 @@ module FunctionParser
     attr_reader :source
     attr_reader :config
 
-    def initialize(source, config = {})
+    def initialize(source, config)
       @source = source
       @config = config
     end
 
     def tokens
-      parse[:tokens]
+      @tokens ||= parse.tokens
     end
 
     def arguments
-      parse[:variables].keys.map(&:to_sym)
+      @arguments ||= parse.variables
     end
 
     def compile
@@ -41,26 +41,26 @@ module FunctionParser
     private
 
     def parse
-      @parse ||= begin
-        expr, vars = Parser.new(config).parse(source)
-        Hash[tokens: expr, variables: vars]
-      end
+      @parse ||= Parser.new(config).parse(source)
     end
 
     def compile_ast(expr)
       recurse = expr.map{ |ele|
         case ele
         when Array then compile_ast(ele)
-        when Operator then ele.dup
+        when Expression::Operator then ele.dup
         else ele
         end
       }
-      ordered = recurse.each_with_index.
-                  select{ |t,i| Operator===t }.
-                    select{ |t,i| !t.prepared? }.
-                      each_with_index.sort_by{ |(t,ei),oi|
-                        [t.precedence,oi*(t.associativity == :L ? 1 : -1)]
-                      }
+      ordered = recurse.
+        each_with_index.
+        select{ |t,i|
+          Expression::Operator === t && !t.prepared?
+        }.
+        each_with_index.
+        sort_by{ |(t,ei),oi|
+          [t.precedence,oi*(t.associativity == :L ? 1 : -1)]
+        }
       nonassociative = Set.new
       ordered.each do |(op,ind_expr),ind_op|
         add_arg(op.associativity,ind_expr,recurse,op)
@@ -68,7 +68,9 @@ module FunctionParser
           other = op.associativity == :L ? :R : :L
           add_arg(other,ind_expr,recurse,op)
         end
-        raise PrecedenceError, "operation is not ready: #{op.inspect}" unless op.prepared?
+        raise PrecedenceError, %{
+          operation is not ready: #{op.inspect}
+        }.squish unless op.prepared?
         if op.associativity == :N
           test_nonassociative(op,nonassociative)
           nonassociative << op.object_id
@@ -76,11 +78,14 @@ module FunctionParser
       end
       compiled = recurse.uniq
       if compiled.count == 1
-        return compiled.first if compiled.first.kind_of?(Operator)
-        ident = Identity.new(compiled.first)
+        ele = compiled.first
+        return ele if ele.kind_of?(Expression::Operator)
+        ident = Expression::Identity.new(ele)
         return ident if ident.prepared?
       end
-      raise ParseError, "The expression is malformed; finished with `#{compiled.inspect}`"
+      raise ParseError, %{
+        The expression is malformed; finished with `#{compiled.inspect}`
+      }.squish
     end
 
     def add_arg(assoc,start,expr,op)
@@ -92,7 +97,9 @@ module FunctionParser
         set = op.method(:right=)
         iter = 1
       else
-        raise PrecedenceError, "Unexpected associativity: `#{assoc}` for `#{op.name}`"
+        raise PrecedenceError, %{
+          Unexpected associativity: `#{assoc}` for `#{op.name}`
+        }.squish
       end
       ind = bounds_check(expr.length,start+iter)
       set.call(before = expr[ind])
@@ -106,17 +113,25 @@ module FunctionParser
 
     def bounds_check(length, ind)
       if ind < 0 || ind >= length
-        raise PrecedenceError, "Operator argument out of bounds: #{ind} not in (0...#{length})"
+        raise PrecedenceError, %{
+          Operator argument out of bounds: #{ind} not in (0...#{length})
+        }.squish
       end
       ind
     end
 
     def test_nonassociative(op, done)
       na = [op.left,op.right].compact.select{ |lr|
-        Operator === lr && lr.associativity == :N && done.include?(lr.object_id) && lr.precedence == op.precedence
+        Expression::Operator === lr &&
+          lr.associativity == :N &&
+            done.include?(lr.object_id) &&
+              lr.precedence == op.precedence
       }
       if na.count > 0
-        raise PrecedenceError, "Nonassociative operators must be manually grouped: #{op.name} <- " + na.map(&:name).inspect
+        msg = "Nonassociative operators must be manually grouped:"
+        msg << " #{op.name} <- "
+        msg << na.map(&:name).inspect
+        raise PrecedenceError, msg
       end
     end
 
