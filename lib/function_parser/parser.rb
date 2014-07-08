@@ -38,7 +38,7 @@ module FunctionParser
         when *@config[:valid_ops]
           expr << Operator.new(token.name)
         when Tokens::SPACE, Tokens.lexicals(';') then next
-        when Tokens.lexicals('(')
+        when *Tokens.lexicals('(', 'f(')
           stack.push(expr)
           expr = []
         when Tokens.lexicals(')')

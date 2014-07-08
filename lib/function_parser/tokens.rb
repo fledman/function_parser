@@ -126,7 +126,8 @@ module FunctionParser
       '[' => RubyToken::TkLBRACK,
       ']' => RubyToken::TkRBRACK,
       '{' => RubyToken::TkLBRACE,
-      '}' => RubyToken::TkRBRACE
+      '}' => RubyToken::TkRBRACE,
+     'f(' => RubyToken::TkfLPAREN
     }
 
     def self.lexicals(*select)
