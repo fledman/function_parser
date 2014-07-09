@@ -6,7 +6,7 @@ module FunctionParser
       def initialize(*ops)
         raise ArgumentError, %{
           Operations Grammar requires at least one operator
-        }.squish if opts.empty?
+        }.squish if ops.empty?
         @tokens = Token.operators(*ops)
         @tokens.freeze
         @operations = ops
