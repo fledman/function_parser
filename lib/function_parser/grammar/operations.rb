@@ -7,7 +7,7 @@ module FunctionParser
         raise ArgumentError, %{
           Operations Grammar requires at least one operator
         }.squish if ops.empty?
-        @tokens = Token.operators(*ops)
+        @tokens = Tokens.operators(*ops)
         @tokens.freeze
         @operations = ops
       end
