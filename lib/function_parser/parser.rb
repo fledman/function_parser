@@ -10,7 +10,7 @@ module FunctionParser
       grammars = @config.grammars
       pt = ParseTree.new
       while token = lexer.advance
-        grammar = grammars.find{ |g| g.tokens.include?(token) }
+        grammar = grammars.find{ |g| g.tokens.include?(token.class) }
         if grammar
           grammar.parse(token, lexer, pt)
         else
