@@ -11,11 +11,12 @@ module FunctionParser
 
     def operations(group, on, *args)
       group = group.to_sym
-      incl = [
+      groups = [
         :arithmetic, :power, :modular,
         :equality, :comparison, :match,
         :logical, :bitwise, :shift
-      ].include?(group)
+      ]
+      incl = groups.include?(group)
       if incl
         on_off(on,group) {
           cat = group.to_s.upcase
@@ -30,48 +31,52 @@ module FunctionParser
         strict = args.empty? ? [true,false] : args
         strict.each do |b|
           key = "inequality_s#{b.to_s[0]}".to_sym
-          on_off(on,key) { Grammar::Inequality(b) }
+          on_off(on,key) { Grammar::Inequality.new(b) }
         end
         self
+      elsif group == :all && args.empty?
+        groups.each{ |i| operations(i, on) }
+        operations(:inequality, on)
       else
         raise ConfigError, %{
           Unknown operation group `#{group.inspect}`
+          with args `#{args.inspect}`
         }.squish
       end
     end
 
-    def assignment(on)
+    def assignment(on = true)
       on_off(on,:assignment) {
         Grammar::Assignment.new
       }
     end
 
-    def variables(on)
+    def variables(on = true)
       on_off(on,:variables) {
         Grammar::Variable.new
       }
     end
 
-    def parentheses(on)
+    def parentheses(on = true)
       on_off(on,:parentheses) {
         Grammar::Parens.new
       }
     end
 
-    def symbols(on)
+    def symbols(on = true)
       on_off(on,:symbols) {
         Grammar::Symbol.new
       }
     end
 
-    def booleans(on)
+    def booleans(on = true)
       configurable(
         on, :nilbool, Grammar::NilBoolean,
         true, false
       )
     end
 
-    def nil(on)
+    def nil(on = true)
       configurable(
         on, :nilbool, Grammar::NilBoolean,
         nil
@@ -80,7 +85,7 @@ module FunctionParser
 
     [Float, Integer, String, Regexp].each do |klass|
       key = (klass.to_s.downcase << 's').to_sym
-      define_method(key) do |on|
+      define_method(key) do |on = true|
         configurable(
           on, key, Grammar::Literal,
           klass

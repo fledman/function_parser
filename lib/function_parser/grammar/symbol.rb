@@ -4,7 +4,7 @@ module FunctionParser
       attr_reader :tokens
 
       def initialize
-        @tokens = Array(Tokens.operands(Symbol))
+        @tokens = Array(Tokens.operands(::Symbol))
         @tokens.freeze
       end
 
