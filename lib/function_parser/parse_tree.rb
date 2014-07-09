@@ -33,7 +33,7 @@ module FunctionParser
     end
 
     def closed?
-      stack.empty?
+      @stack.empty?
     end
 
     def variable(name)
