@@ -9,6 +9,21 @@ module FunctionParser
       @enabled.values
     end
 
+    def token_map
+      grammars.inject({}) { |h, g|
+        raise ConfigError, %{
+          No Tokens for grammar: #{g.inspect}
+        }.squish if g.tokens.blank?
+        g.tokens.each { |t|
+          raise ConfigError, %{
+            Token<->Grammar mapping is not one-to-one
+          }.squish if h[t]
+          h[t] = g
+        }
+        h
+      }
+    end
+
     def operations(group, on, *args)
       group = group.to_sym
       groups = [

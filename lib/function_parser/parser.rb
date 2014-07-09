@@ -7,11 +7,10 @@ module FunctionParser
 
     def parse(source)
       lexer = Lexer.new(source)
-      grammars = @config.grammars
+      token_map = @config.token_map
       pt = ParseTree.new
       while token = lexer.advance
-        grammar = grammars.find{ |g| g.tokens.include?(token.class) }
-        if grammar
+        if grammar = token_map[token.class]
           grammar.parse(token, lexer, pt)
         else
           raise UnexpectedToken, %{
