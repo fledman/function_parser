@@ -19,7 +19,7 @@ require 'irb/ruby-lex'
 require 'active_support/core_ext/hash'
 require 'active_support/core_ext/string/filters'
 ## Get the path to this file
-fp = File.dirname(__FILE__)
+fp = File.expand_path(File.dirname(__FILE__))
 ## Info
 require_relative 'version'
 require_relative 'errors'
