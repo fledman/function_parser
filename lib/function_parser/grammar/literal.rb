@@ -10,8 +10,8 @@ module FunctionParser
 
       def parse(token, lexer, pt)
         after = lexer.peek
-        finish = after ? after.seek : -1
-        value = lexer.source[token.seek...finish]
+        value = after ? lexer.source[token.seek...after.seek]
+                      : lexer.source[token.seek..-1]
         pt.concat(replace(token,value))
       end
 
