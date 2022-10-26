@@ -1,3 +1,4 @@
+require 'date'
 require_relative 'lib/function_parser/version'
 
 Gem::Specification.new do |s|
