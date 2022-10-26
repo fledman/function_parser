@@ -16,6 +16,9 @@ end
 require 'set'
 require 'stringio'
 require 'irb/ruby-lex'
+# activesupport usage
+#  - Hash#with_indifferent_access
+#  - String#squish
 require 'active_support/core_ext/hash'
 require 'active_support/core_ext/string/filters'
 ## Get the path to this file
