@@ -9,4 +9,6 @@ module FunctionParser
   class ParseError < BaseError; end
   class UndefinedVariable < BaseError; end
   class ConfigError < BaseError; end
+
+  NULL = Object.new.freeze
 end

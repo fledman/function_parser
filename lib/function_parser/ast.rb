@@ -77,7 +77,7 @@ module FunctionParser
           nonassociative << op.object_id
         end
       end
-      compiled = tracker.compact
+      compiled = tracker.reject{ |t| t == NULL }
       if compiled.size == 1
         ele = compiled.first
         return ele if ele.kind_of?(Expression::Operator)
@@ -103,11 +103,11 @@ module FunctionParser
         }.squish
       end
       ind = bounds_check(expr.length,start+iter)
-      while expr[ind].nil?
+      while expr[ind] == NULL
         ind = bounds_check(expr.length,ind+iter)
       end
       set.call(expr[ind])
-      expr[ind] = nil
+      expr[ind] = NULL
       ind
     end
 

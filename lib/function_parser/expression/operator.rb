@@ -10,6 +10,7 @@ module FunctionParser
         self.precedence = props[0]
         self.associativity = props[1]
         self.arity = props[2]
+        self.left = self.right = NULL
       end
       def prepared?
         raise PrecedenceError, "Non-Integer precedence: `#{precedence}`" unless (Integer(precedence) rescue false)
@@ -23,10 +24,10 @@ module FunctionParser
           when :R,:N
             expected, other = right, left
           end
-          raise PrecedenceError, "Wrong side of arity=1 operator is populated!" if other
-          return !expected.nil?
+          raise PrecedenceError, "Wrong side of arity=1 operator is populated!" if other != NULL
+          return expected != NULL
         when 2
-          return !(right.nil? || left.nil?)
+          return right != NULL && left != NULL
         end
       end
       def deep_dup
