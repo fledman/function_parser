@@ -32,6 +32,14 @@ module FunctionParser
       true
     end
 
+    def current_expression_empty?
+      @expr.empty?
+    end
+
+    def previous_element_in_current_expression
+      @expr.last
+    end
+
     def closed?
       @stack.empty?
     end

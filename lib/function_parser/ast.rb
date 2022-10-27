@@ -61,12 +61,13 @@ module FunctionParser
         sort_by{ |(t,ei),oi|
           [t.precedence,oi*(t.associativity == :L ? 1 : -1)]
         }
+      tracker = recurse.dup
       nonassociative = Set.new
       ordered.each do |(op,ind_expr),ind_op|
-        add_arg(op.associativity,ind_expr,recurse,op)
+        add_arg(op.associativity,ind_expr,tracker,op)
         if op.arity == 2
           other = op.associativity == :L ? :R : :L
-          add_arg(other,ind_expr,recurse,op)
+          add_arg(other,ind_expr,tracker,op)
         end
         raise PrecedenceError, %{
           operation is not ready: #{op.inspect}
@@ -76,8 +77,8 @@ module FunctionParser
           nonassociative << op.object_id
         end
       end
-      compiled = recurse.uniq
-      if compiled.count == 1
+      compiled = tracker.compact
+      if compiled.size == 1
         ele = compiled.first
         return ele if ele.kind_of?(Expression::Operator)
         ident = Expression::Identity.new(ele)
@@ -102,12 +103,11 @@ module FunctionParser
         }.squish
       end
       ind = bounds_check(expr.length,start+iter)
-      set.call(before = expr[ind])
-      pos = ind
-      while pos >=0 && pos < expr.length && expr[pos] == before do
-        expr[pos] = op
-        pos += iter
+      while expr[ind].nil?
+        ind = bounds_check(expr.length,ind+iter)
       end
+      set.call(expr[ind])
+      expr[ind] = nil
       ind
     end
 
