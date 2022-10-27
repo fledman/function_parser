@@ -124,7 +124,7 @@ RSpec.describe 'Bitwise Operations' do
       end
 
       it 'raises TypeError with loose config' do
-        expect { execute(FunctionParser.default_configuration) }.to raise_error(TypeError)
+        expect { execute(FunctionParser.default_configuration.nil) }.to raise_error(TypeError)
       end
     end
   end
